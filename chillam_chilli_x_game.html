@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#08090c">
+<title>CHILLAM CHILLI X — Horror Prototype</title>
+<style>
+  :root { color-scheme:dark; --cyan:#78f5ff; --red:#ff3c58; }
+  * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body { margin:0;width:100%;height:100%;overflow:hidden;background:#08090c;font-family:system-ui,-apple-system,Segoe UI,sans-serif;touch-action:none; }
+  #game { position:fixed;inset:0;display:block;width:100%;height:100%; }
+  #vignette { position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at center,transparent 30%,rgba(0,0,0,.82) 100%); }
+  #hud { position:fixed;inset:0;pointer-events:none;color:#f5f7fa;text-shadow:0 2px 5px #000; }
+  .top { position:absolute;left:14px;right:14px;top:12px;display:flex;justify-content:space-between;align-items:flex-start;gap:12px; }
+  .logo { font-weight:950;letter-spacing:.12em;font-size:clamp(12px,3vw,17px);color:var(--cyan); }
+  .sub { color:#aab0bb;font-size:10px;letter-spacing:.16em; }
+  .objective { font-size:12px;text-align:right;max-width:58%;color:#e8eaf0; }
+  #status { position:absolute;left:14px;top:66px;font-size:12px;color:#d6d9e0; }
+  #prompt { position:absolute;left:50%;top:61%;transform:translate(-50%,-50%);font-size:12px;letter-spacing:.08em;text-align:center;color:var(--cyan);max-width:85%; }
+  #message { position:absolute;left:50%;top:22%;transform:translateX(-50%);text-align:center;font-size:clamp(16px,4vw,25px);font-weight:900;letter-spacing:.12em;color:#fff;opacity:0;transition:opacity .25s;max-width:90%; }
+  #message.show { opacity:1; }
+  .barWrap { width:112px;height:6px;border:1px solid #ffffff55;margin-top:5px;background:#111; }
+  #fearBar { width:0%;height:100%;background:linear-gradient(90deg,#f4d35e,#ff3c58); }
+  #controls { position:fixed;inset:0;pointer-events:none; }
+  #stickArea { position:absolute;left:16px;bottom:24px;width:140px;height:140px;border-radius:50%;background:#ffffff0b;border:1px solid #ffffff2b;pointer-events:auto;touch-action:none; }
+  #stick { position:absolute;left:43px;top:43px;width:54px;height:54px;border-radius:50%;background:#c5faff2b;border:1px solid #b9faffaa;box-shadow:0 0 20px #78f5ff22; }
+  .action { position:absolute;pointer-events:auto;touch-action:manipulation;border:1px solid #ffffff66;background:#10151cdd;color:white;border-radius:50%;width:64px;height:64px;font-size:11px;font-weight:800;letter-spacing:.04em; }
+  #interact { right:22px;bottom:38px; }
+  #run { right:94px;bottom:112px;width:54px;height:54px; }
+  #lookHint { position:absolute;right:14px;bottom:18px;font-size:10px;color:#c7cbd3;text-align:right;max-width:145px; }
+  #startScreen { position:fixed;inset:0;display:flex;align-items:center;justify-content:center;padding:22px;background:linear-gradient(#030408b8,#030408ed);z-index:5; }
+  .panel { width:min(480px,100%);padding:28px 22px;border:1px solid #78f5ff55;border-radius:18px;background:linear-gradient(145deg,#111923f2,#090a10f5);box-shadow:0 0 70px #000; }
+  h1 { font-size:clamp(28px,8vw,44px);line-height:.98;letter-spacing:-.05em;margin:10px 0 8px; }
+  h1 span { color:var(--cyan); }
+  .tag { color:var(--red);font-size:10px;font-weight:900;letter-spacing:.22em; }
+  .panel p,.panel li { color:#bfc5d0;font-size:13px;line-height:1.55; }
+  .panel ul { padding-left:18px; }
+  #startBtn { width:100%;padding:15px;border:0;border-radius:10px;background:linear-gradient(100deg,#78f5ff,#b9a0ff);color:#08090c;font-weight:950;letter-spacing:.1em;margin-top:8px; }
+  #restart { display:none;position:fixed;z-index:4;left:50%;top:56%;transform:translate(-50%,-50%);padding:13px 18px;border:1px solid #78f5ff;background:#0a1118;color:white;border-radius:10px;font-weight:800; }
+  @media(min-width:800px){ #stickArea{width:155px;height:155px} #stick{left:49px;top:49px} }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+<div id="vignette"></div>
+<div id="hud">
+  <div class="top"><div><div class="logo">CHILLAM CHILLI X</div><div class="sub">3D HORROR · PROTOTYPE 01</div></div><div class="objective" id="objective">Find the 3 lost sigils<br>and reach the exit.</div></div>
+  <div id="status">SIGILS: <span id="sigils">0 / 3</span><br>FEAR <div class="barWrap"><div id="fearBar"></div></div></div>
+  <div id="message"></div><div id="prompt">Explore the abandoned grounds...</div>
+</div>
+<div id="controls">
+  <div id="stickArea"><div id="stick"></div></div>
+  <button class="action" id="interact">INTERACT</button>
+  <button class="action" id="run">RUN</button>
+  <div id="lookHint">Drag the right side to look around<br>Use the left pad to move</div>
+</div>
+<div id="startScreen">
+ <div class="panel">
+  <div class="tag">DO YOU DARE ENTER?</div>
+  <h1>CHILLAM<br><span>CHILLI X</span></h1>
+  <p>A 3D-style mobile horror prototype. Explore a foggy abandoned courtyard, collect three glowing sigils, and find the exit before fear overwhelms you.</p>
+  <ul><li>Left thumb pad: move</li><li>Drag the right side: look around</li><li>RUN: move faster (but builds fear)</li><li>INTERACT: collect nearby sigils or open the exit</li></ul>
+  <p><strong>Note:</strong> This is a first playable prototype with stylized 3D-like graphics rendered directly in your browser. It uses no external libraries.</p>
+  <button id="startBtn">ENTER THE DARKNESS</button>
+ </div>
+</div>
+<button id="restart">PLAY AGAIN</button>
+<script>
+(() => {
+ const canvas=document.getElementById('game'),ctx=canvas.getContext('2d');
+ const startScreen=document.getElementById('startScreen'), startBtn=document.getElementById('startBtn');
+ const promptEl=document.getElementById('prompt'), messageEl=document.getElementById('message'), sigilsEl=document.getElementById('sigils'), fearBar=document.getElementById('fearBar'), objective=document.getElementById('objective'), restartBtn=document.getElementById('restart');
+ let W=innerWidth,H=innerHeight,dpr=1;
+ function resize(){dpr=Math.min(devicePixelRatio||1,1.6);W=innerWidth;H=innerHeight;canvas.width=Math.floor(W*dpr);canvas.height=Math.floor(H*dpr);canvas.style.width=W+'px';canvas.style.height=H+'px';ctx.setTransform(dpr,0,0,dpr,0,0);}
+ addEventListener('resize',resize);resize();
+ const map=[
+  "################",
+  "#......#.......#",
+  "#.##...#..##...#",
+  "#......#.......#",
+  "#..#........#..#",
+  "#..#..##.......#",
+  "#......#..##...#",
+  "###....#.......#",
+  "#...........#..#",
+  "#.##..#........#",
+  "#......#..##...#",
+  "#..............#",
+  "################"
+ ];
+ const tile=3, mw=map[0].length,mh=map.length;
+ let player={x:4.5,y:2.5,a:0,fear:0};
+ let items=[{x:11.5,y:2.5,got:false},{x:2.5,y:9.5,got:false},{x:12.5,y:10.5,got:false}];
+ let exit={x:14.5,y:11.5},enemy={x:8.5,y:8.5,active:false};
+ let running=false,ended=false,won=false,started=false,last=0,elapsed=0,toastTimer=0;
+ let moveX=0,moveY=0,isRun=false,lookPointer=null,lastTouchX=0;
+ function wall(x,y){let ix=Math.floor(x),iy=Math.floor(y);return iy<0||iy>=mh||ix<0||ix>=mw||map[iy][ix]==='#';}
+ function showMessage(s,t=2.4){messageEl.textContent=s;messageEl.classList.add('show');toastTimer=t;}
+ function distance(a,b){return Math.hypot(a.x-b.x,a.y-b.y);}
+ function interact(){
+   if(!running||ended)return;
+   let nearest=null,nd=1.55;
+   for(const it of items){let d=distance(player,it);if(!it.got&&d<nd){nd=d;nearest=it;}}
+   if(nearest){nearest.got=true;player.fear=Math.max(0,player.fear-12);sigilsEl.textContent=items.filter(i=>i.got).length+' / 3';showMessage('SIGIL RECOVERED');if(items.every(i=>i.got)){objective.innerHTML='All sigils found.<br>Reach the exit!';showMessage('THE EXIT IS UNSEALED');}return;}
+   if(distance(player,exit)<1.8){if(items.every(i=>i.got)){won=true;ended=true;running=false;showMessage('YOU ESCAPED THE DARKNESS',8);objective.textContent='MISSION COMPLETE';restartBtn.style.display='block';}else showMessage('THE EXIT IS SEALED — FIND ALL 3 SIGILS');return;}
+   showMessage('NOTHING WITHIN REACH',1.2);
+ }
+ document.getElementById('interact').addEventListener('click',interact);
+ document.getElementById('run').addEventListener('pointerdown',e=>{e.preventDefault();isRun=true;});
+ ['pointerup','pointercancel','pointerleave'].forEach(ev=>document.getElementById('run').addEventListener(ev,()=>isRun=false));
+ const stickArea=document.getElementById('stickArea'),stick=document.getElementById('stick');
+ let stickId=null,stickCenter={x:0,y:0};
+ stickArea.addEventListener('pointerdown',e=>{e.preventDefault();stickId=e.pointerId;stickArea.setPointerCapture(stickId);const r=stickArea.getBoundingClientRect();stickCenter={x:r.left+r.width/2,y:r.top+r.height/2};updateStick(e);});
+ stickArea.addEventListener('pointermove',e=>{if(e.pointerId===stickId){e.preventDefault();updateStick(e);}});
+ function updateStick(e){let dx=e.clientX-stickCenter.x,dy=e.clientY-stickCenter.y,l=Math.hypot(dx,dy),max=43;if(l>max){dx=dx/l*max;dy=dy/l*max;}moveX=dx/max;moveY=dy/max;stick.style.left=(43+dx)+'px';stick.style.top=(43+dy)+'px';}
+ function resetStick(){stickId=null;moveX=moveY=0;stick.style.left='43px';stick.style.top='43px';}
+ ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>stickArea.addEventListener(ev,resetStick));
+ canvas.addEventListener('pointerdown',e=>{if(!running)return;if(e.clientX>W*.36){lookPointer=e.pointerId;lastTouchX=e.clientX;canvas.setPointerCapture(e.pointerId);}});
+ canvas.addEventListener('pointermove',e=>{if(lookPointer===e.pointerId){let dx=e.clientX-lastTouchX;lastTouchX=e.clientX;player.a+=dx*.006;}});
+ ['pointerup','pointercancel','lostpointercapture'].forEach(ev=>canvas.addEventListener(ev,e=>{if(lookPointer===e.pointerId)lookPointer=null;}));
+ addEventListener('keydown',e=>{if(e.key==='ArrowLeft'||e.key==='a')player.a-=.08;if(e.key==='ArrowRight'||e.key==='d')player.a+=.08;if(e.key==='ArrowUp'||e.key==='w')moveY=-1;if(e.key==='ArrowDown'||e.key==='s')moveY=1;if(e.key==='Shift')isRun=true;if(e.key===' '||e.key==='e')interact();});
+ addEventListener('keyup',e=>{if(['ArrowUp','w','ArrowDown','s'].includes(e.key))moveY=0;if(e.key==='Shift')isRun=false;});
+ startBtn.addEventListener('click',()=>{startScreen.style.display='none';running=true;started=true;showMessage('FIND THE THREE SIGILS',3);last=performance.now();requestAnimationFrame(loop);});
+ restartBtn.addEventListener('click',()=>{player={x:4.5,y:2.5,a:0,fear:0};items.forEach(i=>i.got=false);enemy={x:8.5,y:8.5,active:false};ended=false;won=false;running=true;elapsed=0;sigilsEl.textContent='0 / 3';fearBar.style.width='0%';objective.innerHTML='Find the 3 lost sigils<br>and reach the exit.';restartBtn.style.display='none';showMessage('THE NIGHT BEGINS AGAIN',2);last=performance.now();requestAnimationFrame(loop);});
+ function cast(a){let sn=Math.sin(a),cs=Math.cos(a);let d=0;while(d<22){d+=.035;if(wall(player.x+cs*d,player.y+sn*d))break;}return d;}
+ function drawWorld(){
+   ctx.fillStyle='#090b12';ctx.fillRect(0,0,W,H);
+   const horizon=H*.49;
+   let ceil=ctx.createLinearGradient(0,0,0,horizon);ceil.addColorStop(0,'#030408');ceil.addColorStop(1,'#171b24');ctx.fillStyle=ceil;ctx.fillRect(0,0,W,horizon);
+   let floor=ctx.createLinearGradient(0,horizon,0,H);floor.addColorStop(0,'#22242a');floor.addColorStop(1,'#050609');ctx.fillStyle=floor;ctx.fillRect(0,horizon,W,H-horizon);
+   // floor grid recedes into fog
+   ctx.strokeStyle='#9ca3af16';ctx.lineWidth=1;
+   for(let i=1;i<18;i++){let y=horizon+(H-horizon)*i/18;ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(W,y);ctx.stroke();}
+   const fov=Math.PI/2.75, rays=Math.ceil(W/2), colW=W/rays;
+   let zbuf=new Array(rays);
+   for(let i=0;i<rays;i++){
+     const ra=player.a-fov/2+(i/rays)*fov;
+     const raw=cast(ra),d=raw*Math.cos(ra-player.a);zbuf[i]=d;
+     const hitX=player.x+Math.cos(ra)*raw,hitY=player.y+Math.sin(ra)*raw;
+     const sideX=Math.abs(hitX-Math.round(hitX)),sideY=Math.abs(hitY-Math.round(hitY));
+     let shade=sideX<sideY?.78:1;shade*=Math.max(.09,1-d/13);
+     const wallH=Math.min(H*1.8,H/(d+.12)*.86);
+     const top=horizon-wallH/2;
+     const tex=(Math.floor(hitX*7+hitY*3)%5===0)?0.78:1;
+     let r=Math.floor(55*shade*tex),g=Math.floor(65*shade*tex),b=Math.floor(80*shade*tex);
+     const fog=Math.min(.82,d/17);r=r*(1-fog)+9*fog;g=g*(1-fog)+11*fog;b=b*(1-fog)+17*fog;
+     ctx.fillStyle=`rgb(${r},${g},${b})`;ctx.fillRect(i*colW,top,colW+1,wallH);
+     if(Math.floor(hitX*3)%4===0){ctx.fillStyle=`rgba(0,0,0,${.1+fog*.2})`;ctx.fillRect(i*colW,top,colW,wallH);}
+   }
+   function sprite(obj,type){
+     let dx=obj.x-player.x,dy=obj.y-player.y,dist=Math.hypot(dx,dy),ang=Math.atan2(dy,dx)-player.a;
+     while(ang>Math.PI)ang-=Math.PI*2;while(ang<-Math.PI)ang+=Math.PI*2;
+     if(Math.abs(ang)>fov*.65||dist<.15)return;
+     const sx=(.5+ang/fov)*W, size=Math.min(H*1.25,H/(dist+.2)*(type==='enemy'?.78:.48));
+     const sy=horizon+size*.08;
+     const zi=Math.max(0,Math.min(rays-1,Math.floor(sx/W*rays)));
+     if(zbuf[zi]&&dist>zbuf[zi]+.3)return;
+     if(type==='sigil'){
+       ctx.save();ctx.translate(sx,sy-size*.42);ctx.rotate(elapsed*1.1);
+       ctx.shadowColor='#78f5ff';ctx.shadowBlur=24;ctx.fillStyle='#b5fbff';
+       ctx.beginPath();ctx.moveTo(0,-size*.17);ctx.lineTo(size*.11,0);ctx.lineTo(0,size*.17);ctx.lineTo(-size*.11,0);ctx.closePath();ctx.fill();ctx.restore();
+       ctx.fillStyle='#78f5ff';ctx.font=`bold ${Math.max(10,size*.16)}px system-ui`;ctx.textAlign='center';ctx.fillText('SIGIL',sx,sy-size*.12);
+     } else if(type==='exit'){
+       ctx.fillStyle=items.every(i=>i.got)?'#2bffe655':'#ff3c5833';ctx.fillRect(sx-size*.3,sy-size*.9,size*.6,size*.9);
+       ctx.strokeStyle=items.every(i=>i.got)?'#78f5ff':'#ff3c58';ctx.lineWidth=3;ctx.strokeRect(sx-size*.3,sy-size*.9,size*.6,size*.9);
+       ctx.fillStyle='#fff';ctx.font=`bold ${Math.max(9,size*.12)}px system-ui`;ctx.textAlign='center';ctx.fillText('EXIT',sx,sy-size);
+     } else if(type==='enemy'){
+       const pulse=1+Math.sin(elapsed*7)*.035;
+       ctx.save();ctx.translate(sx,sy-size*.45);ctx.scale(pulse,1);
+       ctx.shadowColor='#ff193f';ctx.shadowBlur=25;ctx.fillStyle='#07070a';
+       ctx.beginPath();ctx.ellipse(0,-size*.25,size*.22,size*.34,0,0,Math.PI*2);ctx.fill();
+       ctx.beginPath();ctx.moveTo(-size*.2,-size*.08);ctx.lineTo(-size*.34,size*.46);ctx.lineTo(-size*.13,size*.42);ctx.lineTo(0,size*.05);ctx.lineTo(size*.16,size*.43);ctx.lineTo(size*.31,size*.46);ctx.lineTo(size*.2,-size*.1);ctx.closePath();ctx.fill();
+       ctx.fillStyle='#ff274a';ctx.shadowBlur=12;ctx.fillRect(-size*.11,-size*.29,size*.06,size*.025);ctx.fillRect(size*.05,-size*.29,size*.06,size*.025);ctx.restore();
+     }
+   }
+   // distant atmospheric lights
+   for(const it of items)if(!it.got)sprite(it,'sigil');
+   sprite(exit,'exit');
+   if(enemy.active)sprite(enemy,'enemy');
+   // handheld flashlight cone
+   let glow=ctx.createRadialGradient(W*.5,H*.48,10,W*.5,H*.48,W*.48);
+   glow.addColorStop(0,`rgba(190,220,255,${.10-player.fear*.0005})`);glow.addColorStop(1,'rgba(0,0,0,.5)');
+   ctx.fillStyle=glow;ctx.fillRect(0,0,W,H);
+   // small crosshair
+   ctx.strokeStyle='#c6faff88';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(W/2-6,H*.49);ctx.lineTo(W/2+6,H*.49);ctx.moveTo(W/2,H*.49-6);ctx.lineTo(W/2,H*.49+6);ctx.stroke();
+ }
+ function tick(dt){
+   elapsed+=dt;
+   let forward=-moveY,strafe=moveX;
+   let speed=(isRun?3.1:1.8)*dt;
+   const vx=(Math.cos(player.a)*forward+Math.cos(player.a+Math.PI/2)*strafe)*speed;
+   const vy=(Math.sin(player.a)*forward+Math.sin(player.a+Math.PI/2)*strafe)*speed;
+   if(!wall(player.x+vx,player.y))player.x+=vx;
+   if(!wall(player.x,player.y+vy))player.y+=vy;
+   if(isRun&&(Math.abs(moveX)+Math.abs(moveY)>.1))player.fear=Math.min(100,player.fear+dt*7);
+   else player.fear=Math.max(0,player.fear-dt*1.3);
+   if(player.fear>22)enemy.active=true;
+   if(enemy.active&&!ended){
+     const d=distance(player,enemy);
+     const chaseSpeed=(.35+player.fear/100*.35)*dt;
+     if(d>1.0){let ex=(player.x-enemy.x)/d*chaseSpeed,ey=(player.y-enemy.y)/d*chaseSpeed;if(!wall(enemy.x+ex,enemy.y))enemy.x+=ex;if(!wall(enemy.x,enemy.y+ey))enemy.y+=ey;}
+     if(d<.8){player.fear=Math.min(100,player.fear+dt*19);if(player.fear>=100){ended=true;running=false;showMessage('THE SHADOW FOUND YOU',8);restartBtn.style.display='block';}}
+   }
+   if(player.fear>=100&&!ended){ended=true;running=false;showMessage('FEAR CONSUMED YOU',8);restartBtn.style.display='block';}
+   fearBar.style.width=player.fear+'%';
+   const nearestItem=items.filter(i=>!i.got).sort((a,b)=>distance(player,a)-distance(player,b))[0];
+   if(nearestItem&&distance(player,nearestItem)<1.6)promptEl.textContent='Press INTERACT to collect the glowing sigil';
+   else if(distance(player,exit)<1.8)promptEl.textContent=items.every(i=>i.got)?'Press INTERACT to escape':'The exit is sealed. Find all 3 sigils.';
+   else if(enemy.active&&distance(player,enemy)<4)promptEl.textContent='Something is following you... keep moving!';
+   else promptEl.textContent='Explore the abandoned grounds...';
+   if(toastTimer>0){toastTimer-=dt;if(toastTimer<=0)messageEl.classList.remove('show');}
+ }
+ function loop(now){if(!running)return;const dt=Math.min(.05,(now-last)/1000||.016);last=now;tick(dt);drawWorld();if(running)requestAnimationFrame(loop);}
+ // preview background before starting
+ player.a=0;drawWorld();
+})();
+</script>
+</body>
+</html>
